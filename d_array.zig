@@ -25,7 +25,7 @@ test "array hash map with GPA" {
     defer {
         const ok = gpa.deinit();
         if (ok == .leak) {
-            @panic("TEST FAIL DUE LEAK");
+            @panic("TEST FAILED DUE TO LEAK");
         }
     }
     const allocator = gpa.allocator();
