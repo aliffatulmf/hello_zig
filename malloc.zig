@@ -55,4 +55,44 @@ test "general purpose allocator" {
 
     try std.testing.expectEqualStrings("bar", map.get("foo").?);
     try std.testing.expectEqualStrings("foo", map.get("bar").?);
+
+    var array = std.ArrayList(f16).init(allocator);
+    defer array.deinit();
+
+    const slice = [_]f16{ 1.20, 3.14, 4.29, 6.12 };
+    try array.appendSlice(&slice);
+
+    array.clearAndFree();
+
+    try std.testing.expect(array.getLastOrNull() == null);
+}
+
+test "fixed buffer allocator" {
+    var buffer: [1024]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+
+    const allocator = fba.allocator();
+
+    var array = try std.ArrayList(f16).initCapacity(allocator, 3);
+    defer array.deinit();
+
+    try array.append(1.20);
+    try array.append(3.14);
+
+    try std.testing.expect(array.items.len == 2);
+    try std.testing.expect(array.capacity == 3);
+
+    try array.append(4.29);
+    try array.append(6.28);
+
+    try std.testing.expect(array.items.len == 4);
+
+    const new_item = try array.addOne();
+    new_item.* = 8.12;
+
+    try std.testing.expectEqual(f16, @TypeOf(new_item.*));
+    try std.testing.expect(array.getLast() == 8.12);
+
+    array.clearAndFree();
+    try std.testing.expect(array.getLastOrNull() == null);
 }
